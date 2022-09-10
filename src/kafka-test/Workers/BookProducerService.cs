@@ -13,7 +13,8 @@ public class BookProducerService : IWorker
         var producerConfig = new ProducerConfig()
         {
             BootstrapServers = AppConfig.Host,
-            ClientId = Dns.GetHostName()
+            ClientId = Dns.GetHostName(),
+            Acks = Acks.All,
         };
         _producer = new ProducerBuilder<Null, string>(producerConfig).Build();
         _logger.LogInformation("Producer created.");
@@ -40,7 +41,7 @@ public class BookProducerService : IWorker
                 _logger.LogInformation($"Produced: {book.Title}");
 
                 i++;
-                await Task.Delay(1, cancellationToken);
+                await Task.Delay(100, cancellationToken);
             }
         }
         catch (OperationCanceledException)
