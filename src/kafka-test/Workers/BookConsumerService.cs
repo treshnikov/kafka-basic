@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using Microsoft.Extensions.Logging;
 using Confluent.Kafka;
 
@@ -17,11 +18,14 @@ public class BookConsumerService : IWorker
         {
             GroupId = "book-consumers",
             BootstrapServers = AppConfig.Host,
-            AutoOffsetReset = AutoOffsetReset.Earliest
+            AutoOffsetReset = AutoOffsetReset.Earliest,
+//            PartitionAssignmentStrategy = PartitionAssignmentStrategy.CooperativeSticky
         };
 
         using var consumer = new ConsumerBuilder<Ignore, string>(conf).Build();
-        consumer.Subscribe(AppConfig.Topic);
+        consumer.Assign(new TopicPartition(AppConfig.Topic, new Partition(5){}));
+
+        //consumer.Subscribe(AppConfig.Topic);
         try
         {
             while (true)
@@ -31,7 +35,7 @@ public class BookConsumerService : IWorker
                     var msg = consumer.Consume(cancellationToken);
                     var book = System.Text.Json.JsonSerializer.Deserialize<Book>(msg.Value);
 
-                    _logger.LogInformation($"Consumed: '{book.Title}");
+                    _logger.LogInformation($"Consumed: '{book.Title} from a partition: {msg.Partition.Value}");
                 }
                 catch (ConsumeException e)
                 {

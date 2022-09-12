@@ -5,7 +5,7 @@ using Confluent.Kafka;
 public class BookProducerService : IWorker
 {
     private readonly ILogger<BookProducerService> _logger;
-    private IProducer<Null, string> _producer;
+    private IProducer<int, string> _producer;
 
     public BookProducerService(ILogger<BookProducerService> logger)
     {
@@ -14,9 +14,9 @@ public class BookProducerService : IWorker
         {
             BootstrapServers = AppConfig.Host,
             ClientId = Dns.GetHostName(),
-            Acks = Acks.All,
+            Acks = Acks.All
         };
-        _producer = new ProducerBuilder<Null, string>(producerConfig).Build();
+        _producer = new ProducerBuilder<int, string>(producerConfig).Build();
         _logger.LogInformation("Producer created.");
     }
 
@@ -33,20 +33,31 @@ public class BookProducerService : IWorker
                         "Author " + i,
                          DateTime.Now);
 
-                await _producer.ProduceAsync(AppConfig.Topic, new Message<Null, string>
+                try
                 {
-                    Value = System.Text.Json.JsonSerializer.Serialize(book)
-                }, cancellationToken);
+                    await _producer.ProduceAsync(new TopicPartition(AppConfig.Topic, new Partition(i % 50)), new Message<int, string>
+                    {
+                        Key = i,
+                        Value = System.Text.Json.JsonSerializer.Serialize(book)
+                    }, cancellationToken);
 
-                _logger.LogInformation($"Produced: {book.Title}");
+                    //_logger.LogInformation($"Produced: {book.Title}");
 
-                i++;
-                await Task.Delay(100, cancellationToken);
+                    i++;
+
+                }
+                catch (ProduceException<int, string> ex)
+                {
+
+                    _logger.LogError($"A producer exception has occured: {ex.Message}");
+
+                }
+                await Task.Delay(500, cancellationToken);
             }
         }
         catch (OperationCanceledException)
         {
-            _logger.LogInformation("Producer stopped.");
+            _logger.LogWarning("Producer stopped.");
             _producer?.Flush(cancellationToken);
         }
     }

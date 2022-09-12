@@ -22,6 +22,9 @@ internal class Program
         };
 
         await host.RunAsync(cts.Token);
+
+        Console.WriteLine("Stop");
+
     }
 
     private static IHostBuilder CreateHostBuilder(string[] args)
