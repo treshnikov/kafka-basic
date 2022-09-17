@@ -34,9 +34,9 @@ internal class Program
          {
              services.AddDbContext<BooksDbContext>(opt =>
              {
-                 opt.UseNpgsql("Host=localhost;Port=2462;Database=kafka-postgresql;Username=postgres;Password=postgres");
+                 opt.UseNpgsql(AppConfig.DbConnectionString);
              });
-             services.AddScoped<BooksDbContext>();
+             services.AddScoped<IBooksDbContext, BooksDbContext>();
 
              services.AddHostedService<BookProducerService>();
              services.AddHostedService<BookConsumerService>();

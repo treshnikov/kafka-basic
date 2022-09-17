@@ -5,11 +5,13 @@ using Microsoft.Extensions.Hosting;
 
 public class BookProducerService : BackgroundService
 {
+    private readonly IBooksDbContext _dbContext;
     private readonly ILogger<BookProducerService> _logger;
     private IProducer<int, string> _producer;
 
-    public BookProducerService(ILogger<BookProducerService> logger)
+    public BookProducerService(IBooksDbContext dbContext, ILogger<BookProducerService> logger)
     {
+        _dbContext = dbContext;
         _logger = logger;
         var producerConfig = new ProducerConfig()
         {
@@ -32,27 +34,13 @@ public class BookProducerService : BackgroundService
                         Guid.NewGuid(),
                         "Book " + i,
                         "Author " + i,
-                         DateTime.Now);
+                         DateTime.UtcNow);
 
-                try
-                {
-                    await _producer.ProduceAsync(new TopicPartition(AppConfig.Topic, new Partition(i % 50)), new Message<int, string>
-                    {
-                        Key = i,
-                        Value = System.Text.Json.JsonSerializer.Serialize(book)
-                    }, stopToken);
+                await SaveBookToDb(book, stopToken);
+                await SendBookToKafka(i, book, stopToken);
 
-                    //_logger.LogInformation($"Produced: {book.Title}");
-
-                    i++;
-
-                }
-                catch (ProduceException<int, string> ex)
-                {
-                    _logger.LogWarning($"A producer exception has occured: {ex.Message}");
-
-                }
-                await Task.Delay(TimeSpan.FromSeconds(1), stopToken);
+                await Task.Delay(TimeSpan.FromSeconds(3), stopToken);
+                i++;
             }
         }
         catch (OperationCanceledException)
@@ -61,6 +49,31 @@ public class BookProducerService : BackgroundService
             _producer.Dispose();
 
             _logger.LogWarning("Producer stopped.");
+        }
+    }
+
+    private async Task SaveBookToDb(Book book, CancellationToken stopToken)
+    {
+        _dbContext.Books.Add(book);
+        await _dbContext.SaveChangesAsync(stopToken);
+    }
+
+    private async Task SendBookToKafka(int i, Book book, CancellationToken stopToken)
+    {
+        try
+        {
+            await _producer.ProduceAsync(new TopicPartition(AppConfig.Topic, new Partition(i % 50)), new Message<int, string>
+            {
+                Key = i,
+                Value = System.Text.Json.JsonSerializer.Serialize(book)
+            }, stopToken);
+
+            //_logger.LogInformation($"Produced: {book.Title}");
+        }
+        catch (ProduceException<int, string> ex)
+        {
+            _logger.LogWarning($"A producer exception has occured: {ex.Message}");
+
         }
     }
 }

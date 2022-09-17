@@ -1,6 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 
-public class BooksDbContext : DbContext
+public class BooksDbContext : DbContext, IBooksDbContext
 {
     public DbSet<Book> Books { get; set; }
     public DbSet<BookOutbox> BooksOutbox { get; set; }
