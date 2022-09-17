@@ -20,6 +20,7 @@ internal class Program
         {
             var serviceProvider = scope.ServiceProvider;
             var context = serviceProvider.GetRequiredService<BooksDbContext>();
+            context.Database.EnsureDeleted();
             context.Database.EnsureCreated();
         }
 

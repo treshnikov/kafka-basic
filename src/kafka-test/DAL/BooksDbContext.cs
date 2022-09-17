@@ -21,14 +21,4 @@ public class BooksDbContext : DbContext, IBooksDbContext
     {
         return await Database.BeginTransactionAsync(cancellationToken);
     }
-
-    public async Task CommitTransactionAsync(CancellationToken cancellationToken)
-    {
-        await Database.CommitTransactionAsync(cancellationToken);
-    }
-
-    public async Task RollbackTransactionAsync(CancellationToken cancellationToken)
-    {
-        await Database.RollbackTransactionAsync(cancellationToken);
-    }
 }

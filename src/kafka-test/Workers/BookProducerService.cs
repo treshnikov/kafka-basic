@@ -35,19 +35,21 @@ public class BookProducerService : BackgroundService
                         "Book " + i,
                         "Author " + i,
                          DateTime.UtcNow);
-
-                await _dbContext.BeginTransactionAsync(stopToken);
+                var transaction = await _dbContext.BeginTransactionAsync(stopToken);
                 try
                 {
                     await SaveBookToDb(book, stopToken);
-                    await SendBookToKafka(i, book, stopToken);
+
+                    var serializedBook = System.Text.Json.JsonSerializer.Serialize(book);
+                    await SaveBookToOutbox(serializedBook, stopToken);
+                    await SendBookToKafka(i, serializedBook, stopToken);
                 }
-                catch(Exception e)
+                catch (Exception e)
                 {
-                    await _dbContext.RollbackTransactionAsync(stopToken);
-                    _logger.LogError(e.Message);
+                    await transaction.RollbackAsync(stopToken);
+                    _logger.LogError($"An error occurred while producing books: {e.Message}");
                 }
-                await _dbContext.CommitTransactionAsync(stopToken);
+                await transaction.CommitAsync(stopToken);
 
                 await Task.Delay(TimeSpan.FromSeconds(3), stopToken);
                 i++;
@@ -62,20 +64,26 @@ public class BookProducerService : BackgroundService
         }
     }
 
+    private async Task SaveBookToOutbox(string serializedBook, CancellationToken stopToken)
+    {
+        _dbContext.BooksOutbox.Add(new BookOutbox{Data = serializedBook});
+        await _dbContext.SaveChangesAsync(stopToken);
+    }
+
     private async Task SaveBookToDb(Book book, CancellationToken stopToken)
     {
         _dbContext.Books.Add(book);
         await _dbContext.SaveChangesAsync(stopToken);
     }
 
-    private async Task SendBookToKafka(int i, Book book, CancellationToken stopToken)
+    private async Task SendBookToKafka(int i, string book, CancellationToken stopToken)
     {
         try
         {
             await _producer.ProduceAsync(new TopicPartition(AppConfig.Topic, new Partition(i % 50)), new Message<int, string>
             {
                 Key = i,
-                Value = System.Text.Json.JsonSerializer.Serialize(book)
+                Value = book
             }, stopToken);
 
             //_logger.LogInformation($"Produced: {book.Title}");
