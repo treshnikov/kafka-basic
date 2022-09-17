@@ -39,7 +39,7 @@ internal class Program
              });
              services.AddScoped<IBooksDbContext, BooksDbContext>();
 
-             services.AddHostedService<BookProducerService>();
-             services.AddHostedService<BookConsumerService>();
+             services.AddHostedService<BooksProducerService>();
+             services.AddHostedService<BooksConsumerService>();
          });
 }

@@ -3,13 +3,13 @@ using Microsoft.Extensions.Logging;
 using Confluent.Kafka;
 using Microsoft.Extensions.Hosting;
 
-public class BookProducerService : BackgroundService
+public class BooksProducerService : BackgroundService
 {
     private readonly IBooksDbContext _dbContext;
-    private readonly ILogger<BookProducerService> _logger;
+    private readonly ILogger<BooksProducerService> _logger;
     private IProducer<int, string> _producer;
 
-    public BookProducerService(IBooksDbContext dbContext, ILogger<BookProducerService> logger)
+    public BooksProducerService(IBooksDbContext dbContext, ILogger<BooksProducerService> logger)
     {
         _dbContext = dbContext;
         _logger = logger;
@@ -42,6 +42,8 @@ public class BookProducerService : BackgroundService
 
                     var serializedBook = System.Text.Json.JsonSerializer.Serialize(book);
                     await SaveBookToOutbox(serializedBook, stopToken);
+
+                    //todo - move this code to another service and gather books from the DB in order to implement the transactional outbox approach
                     await SendBookToKafka(i, serializedBook, stopToken);
                 }
                 catch (Exception e)
@@ -66,7 +68,7 @@ public class BookProducerService : BackgroundService
 
     private async Task SaveBookToOutbox(string serializedBook, CancellationToken stopToken)
     {
-        _dbContext.BooksOutbox.Add(new BookOutbox{Data = serializedBook});
+        _dbContext.BooksOutbox.Add(new BookOutbox { Data = serializedBook });
         await _dbContext.SaveChangesAsync(stopToken);
     }
 
