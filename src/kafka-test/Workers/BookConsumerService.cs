@@ -1,8 +1,9 @@
 using System.Collections.Concurrent;
 using Microsoft.Extensions.Logging;
 using Confluent.Kafka;
+using Microsoft.Extensions.Hosting;
 
-public class BookConsumerService : IWorker
+public class BookConsumerService : BackgroundService
 {
     private readonly ILogger<BookConsumerService> _logger;
 
@@ -12,30 +13,32 @@ public class BookConsumerService : IWorker
         _logger.LogInformation("Consumer created.");
     }
 
-    public async Task StartAsync(CancellationToken cancellationToken)
+    protected override async Task ExecuteAsync(CancellationToken stopToken)
     {
+
         var conf = new ConsumerConfig
         {
-            GroupId = "book-consumers",
+            GroupId = AppConfig.ConsumerGroupName,
             BootstrapServers = AppConfig.Host,
             AutoOffsetReset = AutoOffsetReset.Earliest,
-//            PartitionAssignmentStrategy = PartitionAssignmentStrategy.CooperativeSticky
         };
 
         using var consumer = new ConsumerBuilder<Ignore, string>(conf).Build();
-        consumer.Assign(new TopicPartition(AppConfig.Topic, new Partition(5){}));
+        consumer.Subscribe(AppConfig.Topic);
 
-        //consumer.Subscribe(AppConfig.Topic);
+        // for test - consume messages only from the fifth partition
+        //consumer.Assign(new TopicPartition(AppConfig.Topic, new Partition(5){}));
+
         try
         {
-            while (true)
+            while (!stopToken.IsCancellationRequested)
             {
                 try
                 {
-                    var msg = consumer.Consume(cancellationToken);
+                    var msg = consumer.Consume(stopToken);
                     var book = System.Text.Json.JsonSerializer.Deserialize<Book>(msg.Value);
 
-                    _logger.LogInformation($"Consumed: '{book.Title} from a partition: {msg.Partition.Value}");
+                    _logger.LogInformation($"Consumed: '{book.Title} from a partition #{msg.Partition.Value}");
                 }
                 catch (ConsumeException e)
                 {
@@ -45,13 +48,12 @@ public class BookConsumerService : IWorker
         }
         catch (OperationCanceledException)
         {
-            consumer?.Dispose();
-            consumer?.Close();
+            _logger.LogError($"Consumer stopped.");
         }
-    }
-
-    public Task StopAsync(CancellationToken cancellationToken)
-    {
-        return Task.CompletedTask;
+        finally
+        {
+            consumer?.Close();
+            consumer?.Dispose();
+        }
     }
 }

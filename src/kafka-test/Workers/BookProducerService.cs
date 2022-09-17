@@ -1,8 +1,9 @@
 using System.Net;
 using Microsoft.Extensions.Logging;
 using Confluent.Kafka;
+using Microsoft.Extensions.Hosting;
 
-public class BookProducerService : IWorker
+public class BookProducerService : BackgroundService
 {
     private readonly ILogger<BookProducerService> _logger;
     private IProducer<int, string> _producer;
@@ -20,12 +21,12 @@ public class BookProducerService : IWorker
         _logger.LogInformation("Producer created.");
     }
 
-    public async Task StartAsync(CancellationToken cancellationToken)
+    protected override async Task ExecuteAsync(CancellationToken stopToken)
     {
         try
         {
             int i = 1;
-            while (true)
+            while (!stopToken.IsCancellationRequested)
             {
                 var book = new Book(
                         Guid.NewGuid(),
@@ -39,7 +40,7 @@ public class BookProducerService : IWorker
                     {
                         Key = i,
                         Value = System.Text.Json.JsonSerializer.Serialize(book)
-                    }, cancellationToken);
+                    }, stopToken);
 
                     //_logger.LogInformation($"Produced: {book.Title}");
 
@@ -52,19 +53,17 @@ public class BookProducerService : IWorker
                     _logger.LogError($"A producer exception has occured: {ex.Message}");
 
                 }
-                await Task.Delay(500, cancellationToken);
+                await Task.Delay(TimeSpan.FromSeconds(1), stopToken);
             }
         }
         catch (OperationCanceledException)
         {
             _logger.LogWarning("Producer stopped.");
-            _producer?.Flush(cancellationToken);
         }
-    }
-
-    public Task StopAsync(CancellationToken cancellationToken)
-    {
-        _producer?.Dispose();
-        return Task.CompletedTask;
+        finally
+        {
+            _producer?.Flush(stopToken);
+            _producer.Dispose();
+        }
     }
 }
