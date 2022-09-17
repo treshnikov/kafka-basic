@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage;
 
 public class BooksDbContext : DbContext, IBooksDbContext
 {
@@ -16,4 +17,18 @@ public class BooksDbContext : DbContext, IBooksDbContext
         base.OnModelCreating(builder);
     }
 
+    public async Task<IDbContextTransaction> BeginTransactionAsync(CancellationToken cancellationToken)
+    {
+        return await Database.BeginTransactionAsync(cancellationToken);
+    }
+
+    public async Task CommitTransactionAsync(CancellationToken cancellationToken)
+    {
+        await Database.CommitTransactionAsync(cancellationToken);
+    }
+
+    public async Task RollbackTransactionAsync(CancellationToken cancellationToken)
+    {
+        await Database.RollbackTransactionAsync(cancellationToken);
+    }
 }

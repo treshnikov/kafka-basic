@@ -36,8 +36,18 @@ public class BookProducerService : BackgroundService
                         "Author " + i,
                          DateTime.UtcNow);
 
-                await SaveBookToDb(book, stopToken);
-                await SendBookToKafka(i, book, stopToken);
+                await _dbContext.BeginTransactionAsync(stopToken);
+                try
+                {
+                    await SaveBookToDb(book, stopToken);
+                    await SendBookToKafka(i, book, stopToken);
+                }
+                catch(Exception e)
+                {
+                    await _dbContext.RollbackTransactionAsync(stopToken);
+                    _logger.LogError(e.Message);
+                }
+                await _dbContext.CommitTransactionAsync(stopToken);
 
                 await Task.Delay(TimeSpan.FromSeconds(3), stopToken);
                 i++;
@@ -73,7 +83,7 @@ public class BookProducerService : BackgroundService
         catch (ProduceException<int, string> ex)
         {
             _logger.LogWarning($"A producer exception has occured: {ex.Message}");
-
+            throw;
         }
     }
 }
