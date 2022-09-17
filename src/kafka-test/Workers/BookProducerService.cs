@@ -49,8 +49,7 @@ public class BookProducerService : BackgroundService
                 }
                 catch (ProduceException<int, string> ex)
                 {
-
-                    _logger.LogError($"A producer exception has occured: {ex.Message}");
+                    _logger.LogWarning($"A producer exception has occured: {ex.Message}");
 
                 }
                 await Task.Delay(TimeSpan.FromSeconds(1), stopToken);
@@ -58,12 +57,10 @@ public class BookProducerService : BackgroundService
         }
         catch (OperationCanceledException)
         {
-            _logger.LogWarning("Producer stopped.");
-        }
-        finally
-        {
             _producer?.Flush(stopToken);
             _producer.Dispose();
+
+            _logger.LogWarning("Producer stopped.");
         }
     }
 }

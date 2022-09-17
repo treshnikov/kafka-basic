@@ -6,6 +6,12 @@ using Microsoft.Extensions.Hosting;
 public class BookConsumerService : BackgroundService
 {
     private readonly ILogger<BookConsumerService> _logger;
+    private readonly ConsumerConfig _consumerConfig = new()
+    {
+        GroupId = AppConfig.ConsumerGroupName,
+        BootstrapServers = AppConfig.Host,
+        AutoOffsetReset = AutoOffsetReset.Earliest,
+    };
 
     public BookConsumerService(ILogger<BookConsumerService> logger)
     {
@@ -15,22 +21,11 @@ public class BookConsumerService : BackgroundService
 
     protected override async Task ExecuteAsync(CancellationToken stopToken)
     {
-
-        var conf = new ConsumerConfig
-        {
-            GroupId = AppConfig.ConsumerGroupName,
-            BootstrapServers = AppConfig.Host,
-            AutoOffsetReset = AutoOffsetReset.Earliest,
-        };
-
-        using var consumer = new ConsumerBuilder<Ignore, string>(conf).Build();
+        using var consumer = new ConsumerBuilder<Ignore, string>(_consumerConfig).Build();
         consumer.Subscribe(AppConfig.Topic);
-
-        // for test - consume messages only from the fifth partition
-        //consumer.Assign(new TopicPartition(AppConfig.Topic, new Partition(5){}));
-
         try
         {
+
             while (!stopToken.IsCancellationRequested)
             {
                 try
@@ -48,12 +43,10 @@ public class BookConsumerService : BackgroundService
         }
         catch (OperationCanceledException)
         {
-            _logger.LogError($"Consumer stopped.");
-        }
-        finally
-        {
             consumer?.Close();
             consumer?.Dispose();
+
+            _logger.LogWarning($"Consumer stopped.");
         }
     }
 }

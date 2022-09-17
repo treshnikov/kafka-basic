@@ -25,7 +25,7 @@ internal class Program
 
         await host.RunAsync(cts.Token);
 
-        Console.WriteLine("Stop");
+        Console.WriteLine("Application stopped");
     }
 
     private static IHostBuilder CreateHostBuilder(string[] args) =>
