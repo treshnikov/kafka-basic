@@ -36,6 +36,7 @@ public class BooksOutboxPublisherService : BackgroundService
                     foreach (var book in outbox)
                     {
                         await SendBookToKafka(i, book.Data, stopToken);
+                        _logger.LogInformation($"Book #{i} has been published from outbox");
                         _dbContext.BooksOutbox.Remove(book);
                     }
                     await _dbContext.SaveChangesAsync(stopToken);

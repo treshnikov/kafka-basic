@@ -22,7 +22,7 @@ public class BooksProducerService : BackgroundService
             {
                 var book = new Book(
                         Guid.NewGuid(),
-                        "Book " + i,
+                        "Book #" + i,
                         "Author " + i,
                          DateTime.UtcNow);
 
@@ -33,7 +33,6 @@ public class BooksProducerService : BackgroundService
 
                     var serializedBook = System.Text.Json.JsonSerializer.Serialize(book);
                     await _dbContext.BooksOutbox.AddAsync(new BookOutbox { Data = serializedBook }, stopToken);
-
                     await _dbContext.SaveChangesAsync(stopToken);
                 }
                 catch (Exception e)
@@ -42,6 +41,8 @@ public class BooksProducerService : BackgroundService
                     _logger.LogError($"An error occurred while producing books: {e.Message}");
                 }
                 await transaction.CommitAsync(stopToken);
+                _logger.LogInformation($"Book #{i} has been saved into the DB and added to the Outbox.");
+
 
                 await Task.Delay(TimeSpan.FromSeconds(3), stopToken);
                 i++;

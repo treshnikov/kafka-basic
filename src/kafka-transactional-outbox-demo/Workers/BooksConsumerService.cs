@@ -33,7 +33,7 @@ public class BooksConsumerService : BackgroundService
                     var msg = consumer.Consume(stopToken);
                     var book = System.Text.Json.JsonSerializer.Deserialize<Book>(msg.Value);
 
-                    _logger.LogInformation($"Consumed: '{book.Title} from a partition #{msg.Partition.Value}");
+                    _logger.LogInformation($"{book.Title} has been consumed from a partition #{msg.Partition.Value}");
                 }
                 catch (ConsumeException e)
                 {
