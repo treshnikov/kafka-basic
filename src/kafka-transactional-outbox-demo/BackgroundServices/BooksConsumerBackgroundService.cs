@@ -3,9 +3,9 @@ using Microsoft.Extensions.Logging;
 using Confluent.Kafka;
 using Microsoft.Extensions.Hosting;
 
-public class BooksConsumerService : BackgroundService
+public class BooksConsumerBackgroundService : BackgroundService
 {
-    private readonly ILogger<BooksConsumerService> _logger;
+    private readonly ILogger<BooksConsumerBackgroundService> _logger;
     private readonly ConsumerConfig _consumerConfig = new()
     {
         GroupId = AppConfig.ConsumerGroupName,
@@ -13,7 +13,7 @@ public class BooksConsumerService : BackgroundService
         AutoOffsetReset = AutoOffsetReset.Earliest,
     };
 
-    public BooksConsumerService(ILogger<BooksConsumerService> logger)
+    public BooksConsumerBackgroundService(ILogger<BooksConsumerBackgroundService> logger)
     {
         _logger = logger;
         _logger.LogInformation("Consumer created.");
@@ -25,7 +25,6 @@ public class BooksConsumerService : BackgroundService
         consumer.Subscribe(AppConfig.Topic);
         try
         {
-
             while (!stopToken.IsCancellationRequested)
             {
                 try

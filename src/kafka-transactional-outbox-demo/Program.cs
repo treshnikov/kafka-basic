@@ -43,6 +43,7 @@ internal class Program
          .UseSerilog()
          .ConfigureServices((context, services) =>
          {
+             services.AddTransient<IOutboxProducer<Book>, BooksOutboxProducer>();
              services.AddMediatR(typeof(Program));
              services.AddDbContext<BooksDbContext>(opt =>
              {
@@ -50,7 +51,7 @@ internal class Program
              });
              services.AddScoped<IBooksDbContext, BooksDbContext>();
 
-             services.AddHostedService<BooksProducerService>();
-             services.AddHostedService<BooksConsumerService>();
+             services.AddHostedService<BooksProducerBackgroundService>();
+             services.AddHostedService<BooksConsumerBackgroundService>();
          });
 }

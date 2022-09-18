@@ -4,12 +4,12 @@ using Confluent.Kafka;
 using Microsoft.Extensions.Hosting;
 using MediatR;
 
-public class BooksOutboxPublisherService : INotificationHandler<NewMessageWasAddedIntoOutboxNotification>
+public class BooksOutboxPublisher : INotificationHandler<NewMessageWasAddedIntoOutboxNotification>
 {
     private readonly IBooksDbContext _dbContext;
-    private readonly ILogger<BooksProducerService> _logger;
+    private readonly ILogger<BooksProducerBackgroundService> _logger;
 
-    public BooksOutboxPublisherService(IBooksDbContext dbContext, ILogger<BooksProducerService> logger)
+    public BooksOutboxPublisher(IBooksDbContext dbContext, ILogger<BooksProducerBackgroundService> logger)
     {
         _dbContext = dbContext;
         _logger = logger;

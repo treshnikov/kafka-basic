@@ -2,16 +2,16 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Hosting;
 using MediatR;
 
-public class BooksProducerService : BackgroundService
+public class BooksProducerBackgroundService : BackgroundService
 {
-    private readonly IBooksDbContext _dbContext;
-    private readonly ILogger<BooksProducerService> _logger;
+    private readonly ILogger<BooksProducerBackgroundService> _logger;
     private readonly IMediator _mediator;
+    private readonly IOutboxProducer<Book> _outboxBooksProducer;
 
-    public BooksProducerService(IBooksDbContext dbContext, IMediator mediator, ILogger<BooksProducerService> logger)
+    public BooksProducerBackgroundService(IMediator mediator, IOutboxProducer<Book> outboxBooksProducer, ILogger<BooksProducerBackgroundService> logger)
     {
-        this._mediator = mediator;
-        _dbContext = dbContext;
+        _mediator = mediator;
+        _outboxBooksProducer = outboxBooksProducer;
         _logger = logger;
         _logger.LogInformation("Producer created.");
     }
@@ -29,21 +29,7 @@ public class BooksProducerService : BackgroundService
                         "Author " + i,
                          DateTime.UtcNow);
 
-                var transaction = await _dbContext.BeginTransactionAsync(stopToken);
-                try
-                {
-                    await _dbContext.Books.AddAsync(book, stopToken);
-
-                    var serializedBook = System.Text.Json.JsonSerializer.Serialize(book);
-                    await _dbContext.BooksOutbox.AddAsync(new BookOutbox { Data = serializedBook }, stopToken);
-                    await _dbContext.SaveChangesAsync(stopToken);
-                }
-                catch (Exception e)
-                {
-                    await transaction.RollbackAsync(stopToken);
-                    _logger.LogError($"An error occurred while producing books: {e.Message}");
-                }
-                await transaction.CommitAsync(stopToken);
+                await _outboxBooksProducer.ProduceAsync(book, stopToken);
 
                 // send notification to the outbox
                 await _mediator.Publish(new NewMessageWasAddedIntoOutboxNotification(), stopToken);
