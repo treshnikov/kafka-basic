@@ -1,6 +1,6 @@
 # kafka-transactional-outbox-demo
 ## Overview
-- The code demonstrates an approach of using the "transactional outbox" to handle events.
+- The code demonstrates an implementation of the "transactional outbox" approach.
 - The app creates a DB with two tables Books and BooksOutbox.
 - Every few seconds a new book will be published (by a background service), and records will be added to both DB tables in a single transaction.
 - After a new book is published a handler will be raised and records from the outbox table will be sent to the Kafka topic.
