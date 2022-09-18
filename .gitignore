@@ -1,6 +1,5 @@
 # IDEs and editors
 .idea
-.vscode
 .project
 .build
 .classpath
@@ -13,13 +12,6 @@
 *.db-shm
 *.db-wal
 dist
-
-# IDE - VSCode
-.vscode/*
-!.vscode/settings.json
-!.vscode/tasks.json
-!.vscode/launch.json
-!.vscode/extensions.json
 
 # misc
 /.sass-cache
@@ -41,9 +33,6 @@ project.lock.json
 .DS_Store
 *.pyc
 nupkg/
-
-# Visual Studio Code
-.vscode
 
 # User-specific files
 *.suo
