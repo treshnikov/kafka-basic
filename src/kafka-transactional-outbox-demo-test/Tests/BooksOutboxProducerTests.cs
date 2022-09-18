@@ -6,7 +6,7 @@ public class BooksOutboxProducerTests : BaseTest
 {
 
     [Test]
-    public async Task Test1()
+    public async Task BooksOutboxProducer_Should_Add_Records_Both_To_Books_And_Outbox_Tables()
     {
         // arrange
         var loggerMock = new Mock<ILogger<BooksOutboxProducer>>();
@@ -25,5 +25,6 @@ public class BooksOutboxProducerTests : BaseTest
 
         // assert
         Assert.AreEqual(Context.Books.ToArray().Length, 1);
+        Assert.AreEqual(Context.BooksOutbox.ToArray().Length, 1);
     }
 }
