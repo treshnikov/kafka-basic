@@ -49,7 +49,7 @@ public class BooksProducerService : BackgroundService
                 await _mediator.Publish(new NewMessageWasAddedIntoOutboxNotification(), stopToken);
                 _logger.LogInformation($"Book #{i} has been saved into the DB and added to the Outbox.");
 
-                await Task.Delay(TimeSpan.FromSeconds(3), stopToken);
+                await Task.Delay(TimeSpan.FromSeconds(1), stopToken);
                 i++;
             }
         }

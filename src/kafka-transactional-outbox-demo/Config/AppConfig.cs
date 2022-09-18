@@ -6,4 +6,6 @@ public static class AppConfig
     public const string DbConnectionString = "Host=localhost;Port=2462;Database=kafka-postgresql;Username=postgres;Password=postgres";
     public const string Topic = "books-topic";
     public const string ConsumerGroupName = "book-consumers";
+
+    public const int TopicPartitionsNumber = 50;
 }

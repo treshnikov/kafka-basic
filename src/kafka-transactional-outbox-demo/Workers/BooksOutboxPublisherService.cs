@@ -21,14 +21,11 @@ public class BooksOutboxPublisherService : INotificationHandler<NewMessageWasAdd
         {
             var outbox = _dbContext.BooksOutbox.ToArray();
             using var producer = CreateProducer();
-            var bookIdx = 1;
             foreach (var book in outbox)
             {
-                await SendBookToKafka(producer, bookIdx, book.Data, stopToken);
+                await SendBookToKafka(producer, book.Data, stopToken);
                 //_logger.LogInformation($"{book.Data} has been published from outbox");
                 _dbContext.BooksOutbox.Remove(book);
-
-                bookIdx++;
             }
             await _dbContext.SaveChangesAsync(stopToken);
         }
@@ -51,13 +48,14 @@ public class BooksOutboxPublisherService : INotificationHandler<NewMessageWasAdd
         return new ProducerBuilder<int, string>(producerConfig).Build();
     }
 
-    private async Task SendBookToKafka(IProducer<int, string> producer, int i, string book, CancellationToken stopToken)
+    private async Task SendBookToKafka(IProducer<int, string> producer, string book, CancellationToken stopToken)
     {
         try
         {
-            await producer.ProduceAsync(new TopicPartition(AppConfig.Topic, new Partition(i % 50)), new Message<int, string>
+            var partition = new Partition(Math.Abs(book.GetHashCode() % AppConfig.TopicPartitionsNumber));
+            await producer.ProduceAsync(new TopicPartition(AppConfig.Topic, partition), new Message<int, string>
             {
-                Key = i,
+                Key = partition.Value,
                 Value = book
             }, stopToken);
         }
