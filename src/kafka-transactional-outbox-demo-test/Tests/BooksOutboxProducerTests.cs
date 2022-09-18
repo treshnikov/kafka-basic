@@ -1,17 +1,13 @@
 namespace kafka_transactional_outbox_demo_test;
-using Moq;
-using Microsoft.Extensions.Logging;
 
-public class BooksOutboxProducerTests : BaseTest
+public class BooksTransactionalOutboxHandlerTests : BaseTest
 {
-
     [Test]
-    public async Task BooksOutboxProducer_Should_Add_Records_Both_To_Books_And_Outbox_Tables()
+    public async Task BooksTransactionalOutboxHandler_Should_Add_Records_Both_To_Books_And_Outbox_Tables()
     {
         // arrange
-        var loggerMock = new Mock<ILogger<BooksOutboxProducer>>();
-        var logger = loggerMock.Object;
-        var booksOutboxProducer = new BooksOutboxProducer(Context, logger);
+        var loggerMock = new Mock<ILogger<BooksTransactionalOutboxHandler>>();
+        var booksOutboxProducer = new BooksTransactionalOutboxHandler(Context, loggerMock.Object);
 
         // act
         var book = new Book(
@@ -21,7 +17,7 @@ public class BooksOutboxProducerTests : BaseTest
             DateTime.UtcNow);
 
         var cts = new CancellationTokenSource();
-        await booksOutboxProducer.ProduceAsync(book, cts.Token);
+        await booksOutboxProducer.HandleAsync(book, cts.Token);
 
         // assert
         Assert.AreEqual(Context.Books.ToArray().Length, 1);

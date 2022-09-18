@@ -1,16 +1,16 @@
 using Microsoft.Extensions.Logging;
 
-public class BooksOutboxProducer : IOutboxProducer<Book>
+public class BooksTransactionalOutboxHandler : ITransactionalOutboxHandler<Book>
 {
     private readonly IBooksDbContext _dbContext;
-    private readonly ILogger<BooksOutboxProducer> _logger;
+    private readonly ILogger<BooksTransactionalOutboxHandler> _logger;
 
-    public BooksOutboxProducer(IBooksDbContext context, ILogger<BooksOutboxProducer> logger)
+    public BooksTransactionalOutboxHandler(IBooksDbContext context, ILogger<BooksTransactionalOutboxHandler> logger)
     {
         _dbContext = context;
         _logger = logger;
     }
-    public async Task ProduceAsync(Book book, CancellationToken cancelationToken)
+    public async Task HandleAsync(Book book, CancellationToken cancelationToken)
     {
         var transaction = await _dbContext.BeginTransactionAsync(cancelationToken);
         try
@@ -25,6 +25,7 @@ public class BooksOutboxProducer : IOutboxProducer<Book>
         {
             await transaction.RollbackAsync(cancelationToken);
             _logger.LogError($"An error occurred while producing books: {e.Message}");
+            throw;
         }
         await transaction.CommitAsync(cancelationToken);
     }

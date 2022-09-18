@@ -6,9 +6,9 @@ public class BooksProducerBackgroundService : BackgroundService
 {
     private readonly ILogger<BooksProducerBackgroundService> _logger;
     private readonly IMediator _mediator;
-    private readonly IOutboxProducer<Book> _outboxBooksProducer;
+    private readonly ITransactionalOutboxHandler<Book> _outboxBooksProducer;
 
-    public BooksProducerBackgroundService(IMediator mediator, IOutboxProducer<Book> outboxBooksProducer, ILogger<BooksProducerBackgroundService> logger)
+    public BooksProducerBackgroundService(IMediator mediator, ITransactionalOutboxHandler<Book> outboxBooksProducer, ILogger<BooksProducerBackgroundService> logger)
     {
         _mediator = mediator;
         _outboxBooksProducer = outboxBooksProducer;
@@ -29,7 +29,7 @@ public class BooksProducerBackgroundService : BackgroundService
                         "Author " + i,
                          DateTime.UtcNow);
 
-                await _outboxBooksProducer.ProduceAsync(book, stopToken);
+                await _outboxBooksProducer.HandleAsync(book, stopToken);
 
                 // send notification to the outbox
                 await _mediator.Publish(new NewMessageWasAddedIntoOutboxNotification(), stopToken);
