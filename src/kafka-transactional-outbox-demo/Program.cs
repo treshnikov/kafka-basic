@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Serilog;
 using Serilog.Sinks.SystemConsole.Themes;
 using Serilog.Events;
+using MediatR;
 
 internal class Program
 {
@@ -42,6 +43,7 @@ internal class Program
          .UseSerilog()
          .ConfigureServices((context, services) =>
          {
+             services.AddMediatR(typeof(Program));
              services.AddDbContext<BooksDbContext>(opt =>
              {
                  opt.UseNpgsql(AppConfig.DbConnectionString);
@@ -49,7 +51,6 @@ internal class Program
              services.AddScoped<IBooksDbContext, BooksDbContext>();
 
              services.AddHostedService<BooksProducerService>();
-             services.AddHostedService<BooksOutboxPublisherService>();
              services.AddHostedService<BooksConsumerService>();
          });
 }
