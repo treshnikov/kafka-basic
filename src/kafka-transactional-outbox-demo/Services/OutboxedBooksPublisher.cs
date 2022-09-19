@@ -2,13 +2,13 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Hosting;
 using MediatR;
 
-public class BooksOutboxPublisher : INotificationHandler<NewMessageWasAddedIntoOutboxNotification>
+public class OutboxedBooksPublisher : INotificationHandler<NewMessageWasAddedIntoOutboxNotification>
 {
     private readonly IBooksDbContext _dbContext;
     private readonly IKafkaBooksProducer _kafkaBooksProducer;
-    private readonly ILogger<BooksOutboxPublisher> _logger;
+    private readonly ILogger<OutboxedBooksPublisher> _logger;
 
-    public BooksOutboxPublisher(IBooksDbContext dbContext, IKafkaBooksProducer kafkaBooksProducer, ILogger<BooksOutboxPublisher> logger)
+    public OutboxedBooksPublisher(IBooksDbContext dbContext, IKafkaBooksProducer kafkaBooksProducer, ILogger<OutboxedBooksPublisher> logger)
     {
         _dbContext = dbContext;
         _kafkaBooksProducer = kafkaBooksProducer;

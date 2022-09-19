@@ -6,9 +6,9 @@ public class BooksProducerBackgroundService : BackgroundService
 {
     private readonly ILogger<BooksProducerBackgroundService> _logger;
     private readonly IMediator _mediator;
-    private readonly ITransactionalOutboxHandler<Book> _transactionalOutboxHandler;
+    private readonly ITransactionalOutboxHandler<Book, BookOutbox> _transactionalOutboxHandler;
 
-    public BooksProducerBackgroundService(IMediator mediator, ITransactionalOutboxHandler<Book> transactionalOutboxHandler, ILogger<BooksProducerBackgroundService> logger)
+    public BooksProducerBackgroundService(IMediator mediator, ITransactionalOutboxHandler<Book, BookOutbox> transactionalOutboxHandler, ILogger<BooksProducerBackgroundService> logger)
     {
         _mediator = mediator;
         _transactionalOutboxHandler = transactionalOutboxHandler;
@@ -29,7 +29,9 @@ public class BooksProducerBackgroundService : BackgroundService
                         "Author " + i,
                          DateTime.UtcNow);
 
-                await _transactionalOutboxHandler.HandleAsync(book, stopToken);
+                var serializedBook = System.Text.Json.JsonSerializer.Serialize(book);
+                var outboxBook = new BookOutbox { Data = serializedBook };
+                await _transactionalOutboxHandler.HandleAsync(book, outboxBook, stopToken);
 
                 // send a notification to empty the outbox table
                 await _mediator.Publish(new NewMessageWasAddedIntoOutboxNotification(), stopToken);

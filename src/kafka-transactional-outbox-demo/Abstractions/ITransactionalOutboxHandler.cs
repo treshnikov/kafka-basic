@@ -1,10 +1,10 @@
-public interface ITransactionalOutboxHandler<T>
+public interface ITransactionalOutboxHandler<TEntity, TOutboxEntity> where TEntity: class where TOutboxEntity: class  
 {
     /// <summary>
-    /// Saves and item both into the DB main and the outbox table 
+    /// Saves an entity and an outboxed representation of the entity into the DB main and the outbox tables 
     /// </summary>
-    /// <param name="item"></param>
+    /// <param name="entity"></param>
     /// <param name="cancelationToken"></param>
     /// <returns></returns>
-    Task HandleAsync(T item, CancellationToken cancelationToken);
+    Task HandleAsync(TEntity entity, TOutboxEntity outboxEntity, CancellationToken cancelationToken);
 }

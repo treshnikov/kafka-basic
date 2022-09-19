@@ -15,9 +15,11 @@ public class BooksTransactionalOutboxHandlerTests : BaseTest
             "Book #" + 1,
             "Author " + 1,
             DateTime.UtcNow);
+        var serializedBook = System.Text.Json.JsonSerializer.Serialize(book);
+        var outboxBook = new BookOutbox { Data = serializedBook };
 
         var cts = new CancellationTokenSource();
-        await booksOutboxProducer.HandleAsync(book, cts.Token);
+        await booksOutboxProducer.HandleAsync(book, outboxBook, cts.Token);
 
         // assert
         Assert.AreEqual(Context.Books.ToArray().Length, 1);

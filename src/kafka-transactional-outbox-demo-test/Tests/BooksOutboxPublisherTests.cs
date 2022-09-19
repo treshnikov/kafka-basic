@@ -6,9 +6,9 @@ public class BooksOutboxPublisherTests : BaseTest
     public async Task BooksOutboxPublisher_Should_Empty_Outbox_Table()
     {
         // arrange
-        var loggerMock = new Mock<ILogger<BooksOutboxPublisher>>();
+        var loggerMock = new Mock<ILogger<OutboxedBooksPublisher>>();
         var kafkaBooksProducerMock = new Mock<IKafkaBooksProducer>();
-        var booksOutboxPublisher = new BooksOutboxPublisher(Context, kafkaBooksProducerMock.Object, loggerMock.Object);
+        var booksOutboxPublisher = new OutboxedBooksPublisher(Context, kafkaBooksProducerMock.Object, loggerMock.Object);
         var cts = new CancellationTokenSource();
 
         Context.BooksOutbox.Add(new BookOutbox{Id = 1, Data = "123"});

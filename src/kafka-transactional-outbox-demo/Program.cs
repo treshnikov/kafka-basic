@@ -43,7 +43,7 @@ internal class Program
          .UseSerilog()
          .ConfigureServices((context, services) =>
          {
-             services.AddTransient<ITransactionalOutboxHandler<Book>, BooksTransactionalOutboxHandler>();
+             services.AddTransient<ITransactionalOutboxHandler<Book, BookOutbox>, BooksTransactionalOutboxHandler>();
              services.AddTransient<IKafkaBooksProducer, KafkaBooksProducer>();
              services.AddMediatR(typeof(Program));
              services.AddDbContext<BooksDbContext>(opt =>
