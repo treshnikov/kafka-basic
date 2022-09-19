@@ -3,7 +3,7 @@ namespace kafka_transactional_outbox_demo_test;
 public class BooksTransactionalOutboxHandlerTests : BaseTest
 {
     [Test]
-    public async Task BooksTransactionalOutboxHandler_Should_Add_Records_Both_To_Books_And_Outbox_Tables()
+    public async Task Should_Add_Records_Both_To_Books_And_Outbox_Tables()
     {
         // arrange
         var loggerMock = new Mock<ILogger<BooksTransactionalOutboxHandler>>();

@@ -1,9 +1,9 @@
 namespace kafka_transactional_outbox_demo_test;
 
-public class BooksOutboxPublisherTests : BaseTest
+public class OutboxedBooksPublisherTests : BaseTest
 {
     [Test]
-    public async Task BooksOutboxPublisher_Should_Empty_Outbox_Table()
+    public async Task Should_Empty_Outbox_Table()
     {
         // arrange
         var loggerMock = new Mock<ILogger<OutboxedBooksPublisher>>();
