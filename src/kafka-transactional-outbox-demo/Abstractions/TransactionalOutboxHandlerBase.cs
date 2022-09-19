@@ -16,7 +16,6 @@ public abstract class TransactionalOutboxHandlerBase<TEntity, TOutboxEntity> : I
         var transaction = await _dbContext.Database.BeginTransactionAsync(cancelationToken);
         try
         {
-            //(_dbContext as DbContext).Set<TEnt>
             await _dbContext.Set<TEntity>().AddAsync(entity, cancelationToken);
             await _dbContext.Set<TOutboxEntity>().AddAsync(outboxEntity, cancelationToken);
             await _dbContext.SaveChangesAsync(cancelationToken);
