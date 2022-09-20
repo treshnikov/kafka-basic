@@ -1,21 +1,24 @@
 using System.Net;
 using Microsoft.Extensions.Logging;
 using Confluent.Kafka;
+using Microsoft.Extensions.Options;
 
 public class KafkaBooksProducer : IKafkaBooksProducer
 {
     private readonly ILogger<KafkaBooksProducer> _logger;
+    private readonly KafkaConfig _kafkaConfig;
 
-    public KafkaBooksProducer(ILogger<KafkaBooksProducer> logger)
+    public KafkaBooksProducer(ILogger<KafkaBooksProducer> logger, IOptions<KafkaConfig> kafkaConfig)
     {
         _logger = logger;
+        _kafkaConfig = kafkaConfig.Value;
     }
 
     public async Task<DeliveryResult<int, string>> ProduceAsync(string data, CancellationToken cancellationToken = default)
     {
         var producerConfig = new ProducerConfig()
         {
-            BootstrapServers = AppConfig.Host,
+            BootstrapServers = _kafkaConfig.Host,
             ClientId = Dns.GetHostName(),
             Acks = Acks.All
         };
@@ -24,8 +27,8 @@ public class KafkaBooksProducer : IKafkaBooksProducer
 
         try
         {
-            var partition = new Partition(Math.Abs(data.GetHashCode() % AppConfig.TopicPartitionsNumber));
-            return await producer.ProduceAsync(new TopicPartition(AppConfig.Topic, partition), new Message<int, string>
+            var partition = new Partition(Math.Abs(data.GetHashCode() % _kafkaConfig.TopicPartitionsNumber));
+            return await producer.ProduceAsync(new TopicPartition(_kafkaConfig.Topic, partition), new Message<int, string>
             {
                 Key = partition.Value,
                 Value = data

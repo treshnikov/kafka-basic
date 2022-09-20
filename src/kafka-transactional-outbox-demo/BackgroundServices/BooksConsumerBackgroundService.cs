@@ -2,27 +2,31 @@ using System.Collections.Concurrent;
 using Microsoft.Extensions.Logging;
 using Confluent.Kafka;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Options;
 
 public class BooksConsumerBackgroundService : BackgroundService
 {
     private readonly ILogger<BooksConsumerBackgroundService> _logger;
-    private readonly ConsumerConfig _consumerConfig = new()
-    {
-        GroupId = AppConfig.ConsumerGroupName,
-        BootstrapServers = AppConfig.Host,
-        AutoOffsetReset = AutoOffsetReset.Earliest,
-    };
+    private readonly KafkaConfig _kafkaConfig;
+    private readonly ConsumerConfig _consumerConfig;
 
-    public BooksConsumerBackgroundService(ILogger<BooksConsumerBackgroundService> logger)
+    public BooksConsumerBackgroundService(ILogger<BooksConsumerBackgroundService> logger, IOptions<KafkaConfig> kafkaConfig)
     {
         _logger = logger;
+        _kafkaConfig = kafkaConfig.Value;
+        _consumerConfig = new()
+        {
+            GroupId = _kafkaConfig.ConsumerGroupName,
+            BootstrapServers = _kafkaConfig.Host,
+            AutoOffsetReset = AutoOffsetReset.Earliest,
+        }; 
         _logger.LogInformation("Consumer created.");
     }
 
     protected override async Task ExecuteAsync(CancellationToken stopToken)
     {
         using var consumer = new ConsumerBuilder<Ignore, string>(_consumerConfig).Build();
-        consumer.Subscribe(AppConfig.Topic);
+        consumer.Subscribe(_kafkaConfig.Topic);
         try
         {
             while (!stopToken.IsCancellationRequested)
