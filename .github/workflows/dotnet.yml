@@ -2,27 +2,28 @@ name: .NET
 
 on:
   push:
-    branches: [ "main" ]
-  pull_request:
-    branches: [ "main" ]
+    branches:
+      - main
+env:
+  NETCORE_VERSION: '6.0'
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
-
     steps:
-    - uses: actions/checkout@v3
-    - name: Setup .NET
-      uses: actions/setup-dotnet@v2
-      with:
-        dotnet-version: 6.0.x
-    - name: Restore dependencies
-      working-directory: src/kafka-transactional-outbox-demo
-      run: dotnet restore
-    - name: Build
-      working-directory: src/kafka-transactional-outbox-demo
-      run: dotnet build --no-restore
-    - name: Test
-      working-directory: src/kafka-transactional-outbox-demo-test
-      run: dotnet test --no-build --verbosity normal
+      - name: Checkout
+        uses: actions/checkout@v3
+                
+      - name: Setup .NET Core SDK ${{ env.NETCORE_VERSION }}
+        uses: actions/setup-dotnet@v2
+        with:
+          dotnet-version: ${{ env.NETCORE_VERSION }}
+          
+      - name: Build proj
+        run: dotnet build src/kafka-transactional-outbox-demo/kafka-transactional-outbox-demo.csproj --configuration Release
+        
+      - name: Build tests
+        run: dotnet build src/kafka-transactional-outbox-demo-test/kafka-transactional-outbox-demo-test.csproj --configuration Release
+
+      - name: Test
+        run: dotnet test src/kafka-transactional-outbox-demo-test/kafka-transactional-outbox-demo-test.csproj --configuration Release
